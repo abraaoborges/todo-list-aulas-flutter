@@ -1,9 +1,11 @@
 import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:todo_list/helpers/task_helper.dart';
 import 'package:todo_list/models/task.dart';
 import 'package:todo_list/views/task_dialog.dart';
+
 
 class HomePage extends StatefulWidget {
   @override
@@ -29,20 +31,42 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Lista de Tarefas')),
+      resizeToAvoidBottomPadding: false,
+      appBar: AppBar(
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+        
+        Text("Lista de tarefas"),
+        new CircularPercentIndicator(
+          radius: 45.0,
+          lineWidth: 5.0,
+          percent: getProgress(_taskList),
+          center: new Text((getProgress(_taskList) * 100).toInt().toString() + '%'),
+          progressColor: Colors.blueGrey,
+        )
+          
+        ]),
+      ),
+        
+        
       floatingActionButton:
           FloatingActionButton(child: Icon(Icons.add), onPressed: _addNewTask),
-      body: _buildTaskList(),
+      body:  _buildTaskList(),
     );
   }
 
   Widget _buildTaskList() {
+
     if (_taskList.isEmpty) {
       return Center(
         child: _loading ? CircularProgressIndicator() : Text("Sem tarefas!"),
       );
     } else {
-      return ListView.builder(
+      return ListView.separated(
+        separatorBuilder: (context, index) => Divider(
+        color: Colors.black38,
+        ),
         itemBuilder: _buildTaskItemSlidable,
         itemCount: _taskList.length,
       );
@@ -54,7 +78,20 @@ class _HomePageState extends State<HomePage> {
     return CheckboxListTile(
       value: task.isDone,
       title: Text(task.title),
-      subtitle: Text(task.description),
+      subtitle: Column(
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Text('prioridade: ' + task.priority.toString(), style: TextStyle(color: Colors.blueAccent),),              
+            ]
+          ),
+          Row(
+            children: <Widget>[
+              Text(task.description),              
+            ]
+          ),
+        ],
+      ),
       onChanged: (bool isChecked) {
         setState(() {
           task.isDone = isChecked;
@@ -111,6 +148,23 @@ class _HomePageState extends State<HomePage> {
         }
       });
     }
+  }
+
+  getProgress(list){
+    int i;
+    double percent = 0;
+    double contDone = 0;
+
+    for(i = 0; i < list.length; i++){
+      print(list[i].isDone);
+      if(list[i].isDone == true){
+        contDone ++;
+      }
+    }
+    
+    percent  = list.length == 0 ? 0 : (contDone / list.length);
+
+    return percent;
   }
 
   void _deleteTask({Task deletedTask, int index}) {
